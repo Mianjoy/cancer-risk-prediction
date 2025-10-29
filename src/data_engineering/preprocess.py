@@ -1,3 +1,10 @@
+"""Preprocesamiento de datos y persistencia del transformador.
+
+Define listas de características, construye un `ColumnTransformer` que estandariza
+variables numéricas y aplica one-hot encoding a categóricas, y guarda el
+preprocesador entrenado para su uso durante la inferencia.
+"""
+
 import pandas as pd
 import joblib
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -9,6 +16,7 @@ CATEGORICAL_FEATURES = ['gender', 'alcohol_consumption', 'smoking_status', 'phys
 TARGET = 'liver_cancer'
 
 def build_preprocessor():
+    """Crea el transformador para columnas numéricas y categóricas."""
     numeric_transformer = StandardScaler()
     categorical_transformer = OneHotEncoder(drop='first', handle_unknown='ignore')
     return ColumnTransformer(
@@ -19,16 +27,21 @@ def build_preprocessor():
     )
 
 def preprocess_data():
+    """Ajusta el preprocesador y devuelve X procesado y y (numpy)."""
     import os
+
+    # Cargar datos y seleccionar características
     df = load_data_from_sql()
     binary_features = ['hepatitis_b', 'hepatitis_c', 'cirrhosis_history', 'family_history_cancer', 'diabetes']
     all_features = NUMERIC_FEATURES + CATEGORICAL_FEATURES + binary_features
     X = df[all_features]
     y = df[TARGET]
+
+    # Ajustar el preprocesador y transformar X
     preprocessor = build_preprocessor()
     X_processed = preprocessor.fit_transform(X)
-    
-    # Crear directorio models si no existe
+
+    # Guardar el preprocesador para inferencia
     os.makedirs("models", exist_ok=True)
     joblib.dump(preprocessor, "models/preprocessor.pkl")
     return X_processed, y.values

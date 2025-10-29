@@ -1,8 +1,12 @@
+"""Definición del modelo de red neuronal para riesgo de cáncer de hígado."""
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
 class CancerRiskModel(nn.Module):
+    """Arquitectura MLP simple con activación sigmoide para probabilidad binaria."""
+
     def __init__(self, input_dim):
         super(CancerRiskModel, self).__init__()
         self.network = nn.Sequential(
@@ -15,10 +19,12 @@ class CancerRiskModel(nn.Module):
             nn.Linear(32, 1),
             nn.Sigmoid()
         )
-    
+
     def forward(self, x):
+        """Propagación hacia adelante: devuelve probabilidades en [0, 1]."""
         return self.network(x)
 
 def create_model(input_dim):
+    """Crea una instancia del modelo con la dimensión de entrada especificada."""
     model = CancerRiskModel(input_dim)
     return model

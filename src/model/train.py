@@ -1,3 +1,5 @@
+"""Entrenamiento del modelo y guardado de artefactos."""
+
 from .model import create_model
 from ..data_engineering.preprocess import preprocess_data
 from sklearn.metrics import accuracy_score, roc_auc_score
@@ -10,28 +12,37 @@ import numpy as np
 import os
 
 def train_and_save():
+    """Entrena el modelo, reporta métricas y guarda pesos en `models/`.
+
+    Flujo:
+    - Preprocesa datos y crea tensores
+    - Split train/valid
+    - Entrenamiento por épocas con BCELoss y Adam
+    - Reporte de métricas globales (Accuracy, AUC)
+    - Persistencia del `state_dict`
+    """
     X, y = preprocess_data()
-    
+
     # Convertir a tensores de PyTorch
     X_tensor = torch.FloatTensor(X)
     y_tensor = torch.FloatTensor(y).unsqueeze(1)
-    
+
     # Dividir en entrenamiento y validación
     X_train, X_val, y_train, y_val = train_test_split(X_tensor, y_tensor, test_size=0.2, random_state=42)
-    
+
     # Crear datasets y dataloaders
     train_dataset = TensorDataset(X_train, y_train)
     val_dataset = TensorDataset(X_val, y_val)
-    
+
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    
-    # Crear modelo
+
+    # Crear modelo y configuración de entrenamiento
     model = create_model(X.shape[1])
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    # Entrenar modelo
+
+    # Entrenamiento por épocas
     model.train()
     for epoch in range(50):
         total_loss = 0
@@ -42,7 +53,7 @@ def train_and_save():
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-        
+
         # Validación
         model.eval()
         val_loss = 0
@@ -52,11 +63,11 @@ def train_and_save():
                 loss = criterion(outputs, batch_y)
                 val_loss += loss.item()
         model.train()
-        
+
         if (epoch + 1) % 10 == 0:
             print(f"Epoch {epoch+1}/50, Train Loss: {total_loss/len(train_loader):.4f}, Val Loss: {val_loss/len(val_loader):.4f}")
-    
-    # Evaluación final
+
+    # Evaluación final en todo el conjunto
     model.eval()
     with torch.no_grad():
         y_pred_prob = model(X_tensor).numpy().flatten()
@@ -64,8 +75,8 @@ def train_and_save():
         acc = accuracy_score(y, y_pred)
         auc = roc_auc_score(y, y_pred_prob)
         print(f"Accuracy: {acc:.4f}, AUC: {auc:.4f}")
-    
-    # Guardar modelo
+
+    # Guardar pesos del modelo
     os.makedirs("models", exist_ok=True)
     torch.save(model.state_dict(), "models/cancer_risk_model.pth")
     print("Modelo guardado en models/cancer_risk_model.pth")

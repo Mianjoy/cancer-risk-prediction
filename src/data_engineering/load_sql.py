@@ -1,48 +1,63 @@
+"""Carga de datos desde un script SQL o generación sintética de respaldo.
+
+Este módulo intenta ejecutar el contenido de `data/synthetic_liver_cancer_dataset.sql`
+en una base SQLite en memoria. Si falla o no existe la tabla esperada, genera
+un DataFrame sintético para permitir continuar el flujo de entrenamiento.
+"""
+
 import sqlite3
 import pandas as pd
 import os
 
 def load_data_from_sql(sql_file="data/synthetic_liver_cancer_dataset.sql"):
+    """Carga un DataFrame desde la tabla `mytable` definida en el SQL.
+
+    Si el script SQL no existe o no se puede materializar `mytable`,
+    se generan datos sintéticos con la misma estructura esperada.
+    """
     if not os.path.exists(sql_file):
         raise FileNotFoundError(f"Archivo SQL no encontrado: {sql_file}. Asegúrate de que esté en la carpeta 'data/'.")
-    
+
     conn = sqlite3.connect(":memory:")
-    
-    # Leer el archivo SQL y ejecutar línea por línea para manejar errores
+
+    # Leer el archivo SQL completo y ejecutar por sentencias para aislar errores
     with open(sql_file, 'r', encoding='utf-8') as f:
         sql_content = f.read()
-    
-    # Dividir en declaraciones individuales
+
+    # Separar en sentencias simples por ';' para tolerancia a fallos
     statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
-    
+
     for statement in statements:
         try:
             conn.execute(statement)
         except sqlite3.IntegrityError as e:
-            # Si hay error de integridad, continuar con la siguiente declaración
+            # Errores de claves duplicadas u otras restricciones: continuar
             print(f"Advertencia: Error de integridad ignorado: {e}")
             continue
         except Exception as e:
+            # Cualquier otra excepción de SQL también se registra y se continúa
             print(f"Advertencia: Error ejecutando SQL: {e}")
             continue
-    
+
     try:
+        # Intentar leer la tabla esperada
         df = pd.read_sql_query("SELECT * FROM mytable", conn)
-    except Exception as e:
-        # Si no existe la tabla mytable, crear datos sintéticos
+    except Exception:
+        # Fallback a datos sintéticos si la tabla no existe o la consulta falla
         print("Creando datos sintéticos para el entrenamiento...")
         df = create_synthetic_data()
-    
+
     conn.close()
     return df
 
 def create_synthetic_data():
-    """Crear datos sintéticos para el entrenamiento si no se puede cargar desde SQL"""
+    """Crea un conjunto sintético con columnas compatibles con el pipeline."""
     import numpy as np
-    
+
     np.random.seed(42)
     n_samples = 1000
-    
+
+    # Variables con distribuciones plausibles para un dataset de clasificación binaria
     data = {
         'age': np.random.randint(30, 80, n_samples),
         'gender': np.random.choice(['Male', 'Female'], n_samples),
@@ -59,5 +74,5 @@ def create_synthetic_data():
         'diabetes': np.random.choice([0, 1], n_samples, p=[0.8, 0.2]),
         'liver_cancer': np.random.choice([0, 1], n_samples, p=[0.85, 0.15])
     }
-    
+
     return pd.DataFrame(data)

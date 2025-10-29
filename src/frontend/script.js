@@ -1,7 +1,9 @@
+// Convierte un checkbox en 0/1 según su estado
 function getBool(id) {
     return document.getElementById(id).checked ? 1 : 0;
 }
 
+// Construye el payload desde el formulario y realiza la llamada a la API
 function predict() {
     const data = {
         age: parseInt(document.getElementById('age').value),
@@ -19,6 +21,7 @@ function predict() {
         diabetes: getBool('diabetes')
     };
 
+    // Llamada al endpoint FastAPI local
     fetch('http://127.0.0.1:8000/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,6 +32,7 @@ function predict() {
         return res.json();
     })
     .then(result => {
+        // Colorea el porcentaje de riesgo según umbral 50%
         const color = result.risk_percentage > 50 ? 'red' : 'green';
         document.getElementById('result').innerHTML = `
             <h3>📊 Resultado de Predicción</h3>
@@ -38,6 +42,7 @@ function predict() {
         `;
     })
     .catch(err => {
+        // Manejo básico de errores de red/API
         document.getElementById('result').innerHTML = `<p style="color:red;">❌ Error: ${err.message}</p>`;
     });
 }

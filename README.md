@@ -169,3 +169,7 @@ Este proyecto fue desarrollado como parte de un taller de Deep Learning para pre
 ## 📄 Licencia
 
 Proyecto académico - Uso educativo.
+
+## 🙌 Créditos y Asistencia
+
+Este documento fue elaborado con la ayuda de la IA Qwen y el IDE Cursor.

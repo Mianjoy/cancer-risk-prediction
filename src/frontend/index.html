@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Predicción de Riesgo de Cáncer de Hígado</title>
+    <!-- Hoja de estilos principal -->
     <link rel="stylesheet" href="style.css">
+    <!-- Nota: esta página es un cliente simple para consumir la API FastAPI local -->
+    <!-- Requiere que el backend esté corriendo en http://127.0.0.1:8000 -->
 </head>
 <body>
     <div class="container">
         <h1>🩺 Predicción de Riesgo de Cáncer de Hígado</h1>
+        <!-- Formulario de captura de variables clínicas y de estilo de vida -->
         <form id="patientForm">
             <label>Edad: <input type="number" id="age" min="18" max="100" required></label>
             <label>Género:
@@ -46,10 +50,13 @@
                 </select>
             </label>
             <label>Diabetes: <input type="checkbox" id="diabetes"></label>
+            <!-- Lanza la predicción llamando al backend -->
             <button type="button" onclick="predict()">Predecir Riesgo</button>
         </form>
+        <!-- Contenedor para mostrar el resultado de la API -->
         <div id="result"></div>
     </div>
+    <!-- Lógica de interacción con la API -->
     <script src="script.js"></script>
 </body>
 </html>
